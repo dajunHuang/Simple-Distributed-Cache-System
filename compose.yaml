@@ -1,0 +1,13 @@
+services:
+  server1:
+    build: .
+    command: /root/server 1
+    network_mode: host
+  server2:
+    build: .
+    command: /root/server 2
+    network_mode: host
+  server3:
+    build: .
+    command: /root/server 3
+    network_mode: host

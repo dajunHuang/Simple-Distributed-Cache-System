@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option go_package = "djhuang.top/cacheserver/cache";
+
+package cache;
+
+service Cache {
+  rpc GetCache (GetRequest) returns (GetReply) {}
+  rpc SetCache (SetRequest) returns (SetReply) {}
+  rpc DeleteCache (DeleteRequest) returns (DeleteReply) {}
+}
+
+message GetRequest {
+    string key = 1;
+}
+
+message GetReply {
+    string key = 1;
+    string value = 2;
+}
+
+message SetRequest {
+    string key = 1;
+    string value = 2;
+}
+
+message SetReply {
+
+}
+
+message DeleteRequest {
+    string key = 1;
+}
+
+message DeleteReply {
+    int32 num = 1;
+}
+
