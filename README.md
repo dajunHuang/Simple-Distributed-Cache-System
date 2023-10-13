@@ -7,7 +7,7 @@ Usage:
 cd Simple-Distributed-Cache-System
 docker compose up	# build and run 3 server
 # or
-docker build -t cacheserver # only get container
+docker build -t cacheserver .   # only get container
 ```
 
 [Test Script](https://github.com/ruini-classes/sdcs-testsuit)
