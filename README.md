@@ -1,5 +1,5 @@
 # Simple-Distributed-Cache-System
-An Implementation of Distributed System [Assignment](https://uestc.feishu.cn/docx/C7ajdHwq9oppWXxhyelcLVvHngc).
+An Implementation of Distributed Class System [Assignment](https://uestc.feishu.cn/docx/C7ajdHwq9oppWXxhyelcLVvHngc).
 
 Usage:
 
