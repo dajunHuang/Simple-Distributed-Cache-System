@@ -2,31 +2,30 @@ package main
 
 import (
     "os"
-	"fmt"
+    "fmt"
     "net"
     "log"
-	"context"
+    "context"
     "regexp"
-	"net/http"
-	"io/ioutil"
+    "net/http"
+    "io/ioutil"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+    "google.golang.org/grpc"
     pb  "djhuang.top/cacheserver/cache"
 )
 
-var server cacheServer
+var server cacheServer // server instace
 var address [4]string
-var client[2] pb.CacheClient
-var conn[2] *grpc.ClientConn
+var client[2] pb.CacheClient // 2 rpc client to communicate with the other 2 rpc server
+var conn[2] *grpc.ClientConn // 2 connection for 2 rpc client
 
 func setAddress() {
-    if os.Args[1] == "1" {
-        address[0] = "127.0.0.1:9527"
-        address[1] = "127.0.0.1:9530"
+    if os.Args[1] == "1" { // set address variable by server index
+        address[0] = "127.0.0.1:9527" // this server's http server port 
+        address[1] = "127.0.0.1:9530" // this server's rpc server port
 
-        address[2] = "127.0.0.1:9531"
-        address[3] = "127.0.0.1:9532"
+        address[2] = "127.0.0.1:9531" // another server's rpc server port
+        address[3] = "127.0.0.1:9532" // another server's rpc server port
     } else if os.Args[1] == "2" {
         address[0] = "127.0.0.1:9528"
         address[1] = "127.0.0.1:9531"
@@ -44,11 +43,12 @@ func setAddress() {
     }
 }
 
+// http Get handler
 func handleGet(w http.ResponseWriter, key string) {
     fmt.Println("get", key)
 
     if _, ok := server.cache[key]; ok {
-	    w.WriteHeader(http.StatusOK)
+        w.WriteHeader(http.StatusOK)
         w.Header().Set("Content-Type", "application/json")
         fmt.Fprintln(w, "{\""+key+"\":\""+server.cache[key]+"\"}")
         return
@@ -57,6 +57,7 @@ func handleGet(w http.ResponseWriter, key string) {
     w.WriteHeader(http.StatusNotFound)
 }
 
+// http Set handler
 func handleSet(w http.ResponseWriter, jsonstr string) {
 
     reg := regexp.MustCompile(`{\s*"(.*)"\s*:\s*"(.*)"\s*}`)
@@ -73,9 +74,10 @@ func handleSet(w http.ResponseWriter, jsonstr string) {
     CacheSet(client[0], &pb.SetRequest{Key:key, Value:value})
     CacheSet(client[1], &pb.SetRequest{Key:key, Value:value})
 
-	w.WriteHeader(http.StatusOK)
+    w.WriteHeader(http.StatusOK)
 }
 
+// http Delete handler
 func handleDelete(w http.ResponseWriter, key string) {
     fmt.Println("delete", key)
     if _, ok:= server.cache[key]; ok {
@@ -83,15 +85,16 @@ func handleDelete(w http.ResponseWriter, key string) {
         CacheDelete(client[0], &pb.DeleteRequest{Key:key})
         CacheDelete(client[1], &pb.DeleteRequest{Key:key})
 
-	    w.WriteHeader(http.StatusOK)
+        w.WriteHeader(http.StatusOK)
         fmt.Fprintln(w, "1")
         return
     }
 
-	w.WriteHeader(http.StatusOK)
+    w.WriteHeader(http.StatusOK)
     fmt.Fprintln(w, "0")
 }
 
+// http request handler
 func handleHttpRequest(w http.ResponseWriter, r *http.Request) {
     if r.Method == http.MethodGet {
         handleGet(w, r.URL.String()[1:])
@@ -109,20 +112,24 @@ func handleHttpRequest(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+// cacheserver type 
 type cacheServer struct {
     pb.UnimplementedCacheServer
     cache map[string]string
 }
 
+// rpc server Get handler
 func (s *cacheServer) GetCache (ctx context.Context, req *pb.GetRequest) (*pb.GetReply, error) {
     return &pb.GetReply{Key:req.Key, Value:s.cache[req.Key]}, nil
 }
 
+// rpc server Set handler
 func (s *cacheServer) SetCache (ctx context.Context, req *pb.SetRequest) (*pb.SetReply, error) {
     s.cache[req.Key] = req.Value
     return &pb.SetReply{}, nil
 }
 
+// rpc server Delete handler
 func (s *cacheServer) DeleteCache (ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteReply, error) {
     if _, ok:= s.cache[req.Key]; ok {
         delete(s.cache, req.Key)
@@ -152,27 +159,6 @@ func startRpcServer() {
     server = cacheServer{cache: make(map[string]string)}
     pb.RegisterCacheServer(grpcServer, &server)
     grpcServer.Serve(lis)
-}
-
-func setupClient() {
-	var opts []grpc.DialOption
-    var err error
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-
-	conn[0], err = grpc.Dial(address[2], opts...)
-	if err != nil {
-		fmt.Println("fail to dial: %v", err)
-	}
-    fmt.Println("Set up client for",address[2])
-
-	conn[1], err = grpc.Dial(address[3], opts...)
-	if err != nil {
-		fmt.Println("fail to dial: %v", err)
-	}
-    fmt.Println("Set up client for",address[3])
-
-    client[0] = pb.NewCacheClient(conn[0])
-    client[1] = pb.NewCacheClient(conn[1])
 }
 
 func main() {

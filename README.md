@@ -11,3 +11,5 @@ docker build -t cacheserver .   # only get container
 ```
 
 [Test Script](https://github.com/ruini-classes/sdcs-testsuit)
+
+[Demo Video](https://www.bilibili.com/video/BV1V8411r7mr/)
