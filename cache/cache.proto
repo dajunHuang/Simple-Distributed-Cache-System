@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "djhuang.top/cacheserver/cache";
+option go_package = "tangyichen.top/cacheserver/cache";
 
 package cache;
 
